@@ -248,3 +248,71 @@ resource "aws_elb" "my_elb" {
   connection_draining         = true
   connection_draining_timeout = 400
 }
+
+/* Launch configuration */
+resource "aws_security_group" "sg_lc" {
+  name_prefix = "sg_lc_demo"
+  description = "Autoscaling inbound and outbound"
+  vpc_id      = "${aws_vpc.vpc.id}"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    security_groups = ["${aws_security_group.sg_bastion.id}"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_launch_configuration" "lc_demo" {
+  name          = "lc_demo"
+  image_id      = "ami-bd3a6bc5"
+  instance_type = "t2.micro"
+  key_name      = "demoaulutil"
+
+  security_groups = ["${aws_security_group.sg_lc.id}"]
+
+  root_block_device {
+    volume_size           = "8"
+    volume_type           = "gp2"
+    delete_on_termination = "true"
+  }
+}
+
+/* Autoscaling */
+resource "aws_autoscaling_group" "aug_def" {
+  name                 = "asg_demo"
+  launch_configuration = "${aws_launch_configuration.lc_demo.name}"
+
+  # Private subnets
+  vpc_zone_identifier = ["${aws_subnet.sn_private_1.id}", "${aws_subnet.sn_private_2.id}"]
+
+  load_balancers = ["${aws_elb.my_elb.name}"]
+
+  max_size = "2"
+  min_size = "1"
+  desired_capacity = "1"
+
+  force_delete = true
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
