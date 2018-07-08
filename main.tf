@@ -118,4 +118,77 @@ resource "aws_subnet" "sn_private_2" {
   availability_zone = "us-west-2b"
 }
 
+/* Ec2 bastion */
+resource "aws_instance" "ec2_bastion" {
+  ami = "ami-0ad99772"
+  instance_type = "t2.micro"
+  key_name = "demoaulutil"
+  associate_public_ip_address = true
 
+  vpc_security_group_ids = ["${aws_security_group.sg_bastion.id}"]
+  subnet_id = "${aws_subnet.sn_public_1.id}"
+}
+
+resource "aws_security_group" "sg_bastion" {
+  name        = "mysg_bastion"
+
+  description = "Allow traffic"
+  vpc_id      = "${aws_vpc.vpc.id}"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+}
+
+
+/* Ec2 private */
+resource "aws_instance" "ec2_private" {
+  ami = "ami-0ad99772"
+  instance_type = "t2.micro"
+  key_name = "demoaulutil"
+  associate_public_ip_address = false
+
+  vpc_security_group_ids = ["${aws_security_group.sg_private.id}"]
+  subnet_id = "${aws_subnet.sn_private_1.id}"
+}
+
+resource "aws_security_group" "sg_private" {
+  name        = "mysg_private"
+
+  description = "Allow traffic"
+  vpc_id      = "${aws_vpc.vpc.id}"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    security_groups = ["${aws_security_group.sg_bastion.id}"]
+  }
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+}
