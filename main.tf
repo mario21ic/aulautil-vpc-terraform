@@ -275,14 +275,10 @@ resource "aws_security_group" "sg_lc" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_launch_configuration" "lc_demo" {
-  name          = "lc_demo"
+  name_prefix   = "lc_demo"
   image_id      = "ami-bd3a6bc5"
   instance_type = "t2.micro"
   key_name      = "demoaulutil"
@@ -293,6 +289,10 @@ resource "aws_launch_configuration" "lc_demo" {
     volume_size           = "8"
     volume_type           = "gp2"
     delete_on_termination = "true"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
