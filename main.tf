@@ -127,6 +127,10 @@ resource "aws_instance" "ec2_bastion" {
 
   vpc_security_group_ids = ["${aws_security_group.sg_bastion.id}"]
   subnet_id = "${aws_subnet.sn_public_1.id}"
+
+  tags {
+    Name = "myec2_public"
+  }
 }
 
 resource "aws_security_group" "sg_bastion" {
@@ -165,6 +169,10 @@ resource "aws_instance" "ec2_private" {
 
   vpc_security_group_ids = ["${aws_security_group.sg_private.id}"]
   subnet_id = "${aws_subnet.sn_private_1.id}"
+
+  tags {
+    Name = "myec2_private"
+  }
 }
 
 resource "aws_security_group" "sg_private" {
